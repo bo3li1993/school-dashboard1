@@ -29,6 +29,50 @@
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
+.page-header-box {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.page-header-box h2 { font-size: 20px; margin-bottom: 4px; }
+.page-header-box p  { color: var(--text2); font-size: 14px; }
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.result-table th {
+  padding: 10px 8px;
+  text-align: right;
+  background: var(--surface2);
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.result-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.result-table tr:hover { background: var(--surface2); }
+
+.absence-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-right: 4px solid var(--danger);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.absence-card .ac-num  { color: var(--text2); font-size: 13px; min-width: 24px; }
+.absence-card .ac-name { flex: 1; font-weight: 600; }
+.absence-card .ac-class{ color: var(--accent); font-size: 13px; }
+.absence-card .ac-count{ background: var(--danger); color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -715,16 +759,7 @@ body::before {
         <div class="stat-label">حاضرون اليوم</div>
         <div class="stat-bar"><div class="stat-bar-fill" style="width:97%"></div></div>
       </div>
-      <div class="stat-card s4">
-        <div class="glow"></div>
-        <div class="stat-top">
-          <div class="stat-icon">⚠️</div>
-          <span class="stat-trend trend-up">↑ 2</span>
-        </div>
-        <div class="stat-value">5</div>
-        <div class="stat-label">فصول بها غياب</div>
-        <div class="stat-bar"><div class="stat-bar-fill" style="width:33%"></div></div>
-      </div>
+
     </div>
 
     <!-- Charts -->
@@ -798,24 +833,67 @@ body::before {
         <div class="period-grid" id="periodGrid"></div>
       </div>
 
-      <!-- Period Tabs -->
-      <div class="period-tabs" id="periodTabs"></div>
-
-      <!-- Students Panel -->
+      <!-- Unified All-Periods Table -->
       <div class="students-panel">
         <div class="sp-header">
-          <div class="sp-title" id="spTitle">الحصة الأولى — 7:30 إلى 8:15</div>
-          <div class="sp-filters">
-            <button class="sp-filter active" onclick="setFilter('all',this)">الكل</button>
-            <button class="sp-filter" onclick="setFilter('absent',this)">غائب</button>
-            <button class="sp-filter" onclick="setFilter('present',this)">حاضر</button>
-          </div>
+          <div class="sp-title">📋 كشف الحضور والغياب — جميع الحصص</div>
         </div>
         <div class="sp-body" id="spBody"></div>
       </div>
 
+      <!-- High Absence Panel -->
+      <div class="students-panel" id="highAbsencePanel" style="margin-top:16px;display:none">
+        <div class="sp-header">
+          <div class="sp-title" style="color:var(--danger)">⚠️ طلاب غابوا أكثر من 5 أيام</div>
+        </div>
+        <div class="sp-body" id="highAbsenceBody"></div>
+      </div>
+
     </div>
   </div><!-- /classesPage -->
+
+
+  <!-- STUDENT SEARCH PAGE -->
+  <div id="studentPage" style="display:none">
+    <div class="page-header-box">
+      <h2>👤 بحث عن طالب</h2>
+      <p>اعرف سجل حضور وغياب أي طالب</p>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <select id="studentClassFilter" onchange="loadStudentList()" style="flex:1;min-width:140px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:Tajawal">
+        <option value="">اختر الفصل...</option>
+      </select>
+      <select id="studentNameFilter" onchange="searchStudent()" style="flex:2;min-width:200px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:Tajawal">
+        <option value="">اختر الطالب...</option>
+      </select>
+    </div>
+    <div id="studentResult"></div>
+  </div>
+
+  <!-- DATE SEARCH PAGE -->
+  <div id="dateSearchPage" style="display:none">
+    <div class="page-header-box">
+      <h2>📅 غياب الفصل بتاريخ معين</h2>
+      <p>اختر فصل وتاريخ لعرض من حضر ومن غاب</p>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <select id="dateClassFilter" style="flex:1;min-width:140px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:Tajawal">
+        <option value="">اختر الفصل...</option>
+      </select>
+      <input type="date" id="dateFilter" style="flex:1;min-width:160px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:Tajawal">
+      <button onclick="searchByDate()" style="padding:10px 24px;border-radius:10px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:Tajawal;font-size:15px;font-weight:700">🔍 بحث</button>
+    </div>
+    <div id="dateResult"></div>
+  </div>
+
+  <!-- HIGH ABSENCE PAGE -->
+  <div id="highAbsencePage" style="display:none">
+    <div class="page-header-box">
+      <h2>⚠️ الطلاب الغائبون أكثر من 5 أيام</h2>
+      <p>قائمة الطلاب الذين تجاوز غيابهم 5 أيام خلال الفصل الدراسي</p>
+    </div>
+    <div id="highAbsenceAllResult"></div>
+  </div>
 
 </main>
 </div>
@@ -914,6 +992,9 @@ async function loadData() {
       }
     });
 
+    // حفظ كل بيانات الغياب للحساب التاريخي
+    window.ALL_ATTENDANCE = json.attendance;
+
     dataLoaded = true;
     showLoading(false);
     refreshUI();
@@ -954,11 +1035,13 @@ function refreshUI() {
 
 function updateStats() {
   const totalAbsent = CLASSES.reduce((s,c)=>s+getTodayAbsent(c.id),0);
-  const totalStudents = 380;
+  const totalStudents = Object.values(STUDENTS_DATA).flat().length || 380;
   document.getElementById('totalAbsent').textContent = totalAbsent;
   document.getElementById('totalPresent').textContent = totalStudents - totalAbsent;
   const pct = ((totalAbsent/totalStudents)*100).toFixed(1);
   document.getElementById('absentBar').style.width = pct + '%';
+
+
 }
 
 // ═══════════ STATE ═══════════
@@ -1034,14 +1117,7 @@ function buildBarChart() {
   `).join('') : `<div class="empty-state"><div class="ei">✅</div><p>لا يوجد غياب اليوم!</p></div>`;
 }
 
-// ═══════════ PAGE SWITCH ═══════════
-function showPage(page, btn) {
-  currentPage = page;
-  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('overviewPage').style.display = page==='overview'?'block':'none';
-  document.getElementById('classesPage').style.display = page==='classes'?'block':'none';
-}
+// ═══════════ PAGE SWITCH (old - replaced below) ═══════════
 
 // ═══════════ SELECT CLASS ═══════════
 function selectClass(classId) {
@@ -1080,14 +1156,14 @@ function selectClass(classId) {
   document.getElementById('welcomeView').style.display = 'none';
   document.getElementById('classDetail').style.display = 'block';
 
-  // Build period grid
+  // Build period grid summary
   buildPeriodGrid(data);
 
-  // Build period tabs
-  buildPeriodTabsUI(data);
+  // Show unified table
+  renderStudents(data);
 
-  // Show students
-  renderStudents(data, 1);
+  // Show high absence section
+  renderHighAbsence(classId);
 }
 
 // ═══════════ PERIOD GRID ═══════════
@@ -1106,81 +1182,362 @@ function buildPeriodGrid(data) {
   }).join('');
 }
 
-// ═══════════ PERIOD TABS ═══════════
-function buildPeriodTabsUI(data) {
-  const container = document.getElementById('periodTabs');
-  container.innerHTML = PERIODS.map(p => {
-    const count = (data.periods[p.id]||[]).length;
-    return `
-      <button class="period-tab ${p.id===1?'active':''}" onclick="switchPeriod(${p.id})" id="ptab-${p.id}">
-        ${p.name}
-        ${count>0?`<span class="tab-dot">${count}</span>`:''}
-      </button>
-    `;
-  }).join('');
-}
-
-function switchPeriod(id) {
-  currentPeriod = id;
-  currentFilter = 'all';
-
-  // Reset filter buttons
-  document.querySelectorAll('.sp-filter').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.sp-filter')[0].classList.add('active');
-
-  // Active tab
-  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
-  const tab = document.getElementById(`ptab-${id}`);
-  if (tab) tab.classList.add('active');
-
-  // Active grid cell
-  document.querySelectorAll('.period-cell').forEach(c=>c.classList.remove('active-period'));
-  const cells = document.querySelectorAll('.period-cell');
-  if (cells[id-1]) cells[id-1].classList.add('active-period');
-
-  renderStudents(getClassData(currentClass), id);
-}
-
-// ═══════════ RENDER STUDENTS ═══════════
-function renderStudents(data, periodId) {
-  const period = PERIODS.find(p=>p.id===periodId);
-  document.getElementById('spTitle').textContent = `${period.name} — ${period.time}`;
-
-  const absentNums = data.periods[periodId] || [];
-  let students = data.students.map((name,i)=>({
-    num: i+1, name,
-    status: absentNums.includes(i+1) ? 'absent' : 'present'
-  }));
-
-  if (currentFilter==='absent') students = students.filter(s=>s.status==='absent');
-  if (currentFilter==='present') students = students.filter(s=>s.status==='present');
-
+// ═══════════ RENDER ALL PERIODS TABLE ═══════════
+function renderStudents(data) {
   const body = document.getElementById('spBody');
-
-  if (students.length === 0) {
-    body.innerHTML = `<div class="empty-state">
-      <div class="ei">${currentFilter==='absent'?'✅':'📋'}</div>
-      <p>${currentFilter==='absent'?'لا يوجد غائبون في هذه الحصة 🎉':'لا يوجد حاضرون في هذه الحصة'}</p>
-    </div>`;
+  const students = data.students;
+  if (!students || students.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="ei">📋</div><p>لا يوجد بيانات</p></div>`;
     return;
   }
 
-  body.innerHTML = students.map((s,i)=>`
-    <div class="student-card" style="animation-delay:${i*0.04}s">
+  // Build header
+  let html = `<div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead>
+      <tr style="background:var(--surface2);color:var(--text2)">
+        <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">#</th>
+        <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">اسم الطالب</th>`;
+
+  PERIODS.forEach(p => {
+    html += `<th style="padding:10px 6px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap">${p.short}</th>`;
+  });
+  html += `<th style="padding:10px 8px;text-align:center;border-bottom:1px solid var(--border)">الغياب</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  students.forEach((name, i) => {
+    const num = i + 1;
+    let absentCount = 0;
+    let cells = '';
+    PERIODS.forEach(p => {
+      const absentNums = data.periods[p.id] || [];
+      const isAbsent = absentNums.includes(num);
+      if (isAbsent) absentCount++;
+      cells += `<td style="padding:8px 6px;text-align:center;border-bottom:1px solid var(--border)">
+        ${isAbsent ? '<span style="color:var(--danger);font-size:16px">✗</span>' : '<span style="color:var(--success);font-size:16px">✓</span>'}
+      </td>`;
+    });
+
+    const rowBg = absentCount > 0 ? 'background:rgba(255,61,90,0.05)' : '';
+    html += `<tr style="${rowBg}">
+      <td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2)">${num}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);font-weight:500">${name}</td>
+      ${cells}
+      <td style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">
+        ${absentCount > 0 ? `<span style="background:var(--danger);color:#fff;padding:2px 8px;border-radius:20px;font-size:12px">${absentCount}</span>` : '<span style="color:var(--success)">—</span>'}
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  body.innerHTML = html;
+}
+
+// ═══════════ HIGH ABSENCE (5+ days all time) ═══════════
+function renderHighAbsence(classId) {
+  const panel = document.getElementById('highAbsencePanel');
+  const body = document.getElementById('highAbsenceBody');
+
+  // حساب الغياب الكلي لكل طالب من كل البيانات
+  const students = STUDENTS_DATA[classId] || [];
+  if (!students.length) { panel.style.display = 'none'; return; }
+
+  const highAbsent = [];
+  students.forEach((name, i) => {
+    const num = i + 1;
+    // عد من كل البيانات التاريخية
+    const studentId = classId.replace('/','') + String(num).padStart(2,'0');
+    const count = (window.ALL_ATTENDANCE || []).filter(row => {
+      const sid = String(row[4] || '').trim();
+      const status = String(row[5] || '').trim();
+      return sid === studentId && status === 'غائب';
+    }).length;
+    if (count > 5) highAbsent.push({ num, name, count });
+  });
+
+  highAbsent.sort((a,b) => b.count - a.count);
+
+  if (highAbsent.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+  body.innerHTML = highAbsent.map((s,i) => `
+    <div class="student-card" style="animation-delay:${i*0.04}s;border-right:3px solid var(--danger)">
       <div class="scard-num">${s.num}</div>
       <div class="scard-name">${s.name}</div>
-      <div class="scard-badge ${s.status}">
-        ${s.status==='absent'?'🔴 غائب':'🟢 حاضر'}
-      </div>
+      <div class="scard-badge absent">🔴 ${s.count} يوم غياب</div>
     </div>
   `).join('');
 }
 
-function setFilter(type, btn) {
-  currentFilter = type;
-  document.querySelectorAll('.sp-filter').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if (currentClass) renderStudents(getClassData(currentClass), currentPeriod);
+// ═══════════ PAGE SWITCH (EXTENDED) ═══════════
+const ALL_PAGES = ['overviewPage','classesPage','studentPage','dateSearchPage','highAbsencePage'];
+
+function showPage(page, btn) {
+  currentPage = page;
+  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ALL_PAGES.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  const map = {
+    overview:'overviewPage', classes:'classesPage',
+    student:'studentPage', dateSearch:'dateSearchPage',
+    highAbsence:'highAbsencePage'
+  };
+  const target = document.getElementById(map[page]);
+  if(target) target.style.display = 'block';
+
+  if(page === 'student') initStudentSearch();
+  if(page === 'dateSearch') initDateSearch();
+  if(page === 'highAbsence') renderHighAbsenceAll();
+}
+
+// ═══════════ STUDENT SEARCH ═══════════
+function initStudentSearch() {
+  const sel = document.getElementById('studentClassFilter');
+  if(sel.options.length > 1) return;
+  CLASSES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.full;
+    sel.appendChild(opt);
+  });
+}
+
+function loadStudentList() {
+  const classId = document.getElementById('studentClassFilter').value;
+  const sel = document.getElementById('studentNameFilter');
+  sel.innerHTML = '<option value="">اختر الطالب...</option>';
+  if(!classId) return;
+  const students = STUDENTS_DATA[classId] || [];
+  students.forEach((name,i) => {
+    const opt = document.createElement('option');
+    opt.value = i+1; opt.textContent = `${i+1}- ${name}`;
+    sel.appendChild(opt);
+  });
+  document.getElementById('studentResult').innerHTML = '';
+}
+
+function searchStudent() {
+  const classId = document.getElementById('studentClassFilter').value;
+  const numStr  = document.getElementById('studentNameFilter').value;
+  if(!classId || !numStr) return;
+  const num = parseInt(numStr);
+  const students = STUDENTS_DATA[classId] || [];
+  const name = students[num-1] || '';
+  const studentId = classId.replace('/','') + String(num).padStart(2,'0');
+
+  const allAtt = window.ALL_ATTENDANCE || [];
+  // جمع كل السجلات لهذا الطالب
+  const records = allAtt.filter(row => String(row[4]||'').trim() === studentId);
+
+  // تجميع حسب التاريخ
+  const byDate = {};
+  records.forEach(row => {
+    let d = row[1];
+    if(d instanceof Date) d = d.toISOString().substring(0,10);
+    else d = String(d).substring(0,10);
+    if(!byDate[d]) byDate[d] = [];
+    byDate[d].push({ period: parseInt(row[3])||0, status: String(row[5]||'').trim() });
+  });
+
+  const sortedDates = Object.keys(byDate).sort().reverse();
+  const totalAbsent = records.filter(r=>String(r[5]).trim()==='غائب').length;
+
+  const el = document.getElementById('studentResult');
+  if(sortedDates.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">✅</div><p>لا يوجد أي سجل غياب لهذا الطالب</p></div>`;
+    return;
+  }
+
+  let html = `
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px 20px;flex:1;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--danger)">${totalAbsent}</div>
+        <div style="color:var(--text2);font-size:13px">إجمالي الغياب</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px 20px;flex:1;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--accent)">${sortedDates.length}</div>
+        <div style="color:var(--text2);font-size:13px">أيام مسجلة</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px 20px;flex:1;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:${totalAbsent>5?'var(--danger)':'var(--success)'}">${totalAbsent>5?'⚠️ خطر':'✅ طبيعي'}</div>
+        <div style="color:var(--text2);font-size:13px">المستوى</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="result-table">
+      <thead><tr>
+        <th>التاريخ</th>
+        <th>الحصة 1</th><th>الحصة 2</th><th>الحصة 3</th><th>الحصة 4</th>
+        <th>الحصة 5</th><th>الحصة 6</th><th>الحصة 7</th>
+      </tr></thead>
+      <tbody>`;
+
+  sortedDates.forEach(date => {
+    const dayRecs = byDate[date];
+    html += `<tr><td style="font-weight:600;white-space:nowrap">${date}</td>`;
+    for(let p=1; p<=7; p++) {
+      const rec = dayRecs.find(r=>r.period===p);
+      if(!rec) html += `<td style="text-align:center;color:var(--text3)">—</td>`;
+      else if(rec.status==='غائب') html += `<td style="text-align:center;color:var(--danger);font-size:16px">✗</td>`;
+      else html += `<td style="text-align:center;color:var(--success);font-size:16px">✓</td>`;
+    }
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  el.innerHTML = html;
+}
+
+// ═══════════ DATE SEARCH ═══════════
+function initDateSearch() {
+  const sel = document.getElementById('dateClassFilter');
+  if(sel.options.length > 1) return;
+  CLASSES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.full;
+    sel.appendChild(opt);
+  });
+  // default today
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('dateFilter').value = `${y}-${m}-${d}`;
+}
+
+function searchByDate() {
+  const classId = document.getElementById('dateClassFilter').value;
+  const dateVal = document.getElementById('dateFilter').value;
+  const el = document.getElementById('dateResult');
+
+  if(!classId || !dateVal) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">📅</div><p>اختر الفصل والتاريخ أولاً</p></div>`;
+    return;
+  }
+
+  const dateStr = dateVal.replace(/-/g,'/');
+  const allAtt = window.ALL_ATTENDANCE || [];
+  const students = STUDENTS_DATA[classId] || [];
+  const cls = CLASSES.find(c=>c.id===classId);
+
+  // سجلات هذا الفصل في هذا التاريخ
+  const dayRecs = allAtt.filter(row => {
+    let d = row[1];
+    if(d instanceof Date) d = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    else d = String(d).substring(0,10).replace(/-/g,'/');
+    return String(row[2]||'').trim() === classId && d === dateStr && String(row[5]||'').trim() === 'غائب';
+  });
+
+  if(students.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">📋</div><p>لا يوجد بيانات طلاب لهذا الفصل</p></div>`;
+    return;
+  }
+
+  // بناء قائمة غياب حسب studentId
+  const absentIds = new Set(dayRecs.map(r=>String(r[4]||'').trim()));
+
+  let absentCount = 0;
+  let html = `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <div><span style="font-size:20px;font-weight:800">${cls?.full||classId}</span></div>
+      <div style="color:var(--text2)">📅 ${dateVal}</div>
+      <div id="dateSummary"></div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="result-table">
+      <thead><tr>
+        <th>#</th><th>اسم الطالب</th>
+        <th style="text-align:center">ح1</th><th style="text-align:center">ح2</th>
+        <th style="text-align:center">ح3</th><th style="text-align:center">ح4</th>
+        <th style="text-align:center">ح5</th><th style="text-align:center">ح6</th>
+        <th style="text-align:center">ح7</th><th style="text-align:center">الحالة</th>
+      </tr></thead>
+      <tbody>`;
+
+  students.forEach((name,i) => {
+    const num = i+1;
+    const sid = classId.replace('/','') + String(num).padStart(2,'0');
+    let rowAbsent = 0;
+    let cells = '';
+    for(let p=1;p<=7;p++){
+      const rec = dayRecs.find(r=>String(r[4]||'').trim()===sid && parseInt(r[3])===p);
+      if(rec){ rowAbsent++; cells+=`<td style="text-align:center;color:var(--danger);font-size:16px">✗</td>`; }
+      else cells+=`<td style="text-align:center;color:var(--success);font-size:16px">✓</td>`;
+    }
+    if(rowAbsent>0) absentCount++;
+    const bg = rowAbsent>0?'background:rgba(255,61,90,0.06)':'';
+    html+=`<tr style="${bg}">
+      <td style="color:var(--text2)">${num}</td>
+      <td style="font-weight:${rowAbsent>0?'700':'400'}">${name}</td>
+      ${cells}
+      <td style="text-align:center">${rowAbsent>0?`<span style="background:var(--danger);color:#fff;padding:2px 10px;border-radius:20px;font-size:12px">غائب ${rowAbsent}</span>`:'<span style="color:var(--success)">حاضر</span>'}</td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table></div>`;
+  el.innerHTML = html;
+  document.getElementById('dateSummary').innerHTML =
+    `<span style="color:var(--danger);font-weight:700">${absentCount} غائب</span> &nbsp;|&nbsp;
+     <span style="color:var(--success);font-weight:700">${students.length-absentCount} حاضر</span>`;
+}
+
+// ═══════════ HIGH ABSENCE ALL STUDENTS ═══════════
+function renderHighAbsenceAll() {
+  const el = document.getElementById('highAbsenceAllResult');
+  el.innerHTML = '<div style="color:var(--text2);padding:20px;text-align:center">⏳ جارٍ الحساب...</div>';
+
+  const allAtt = window.ALL_ATTENDANCE || [];
+  if(!allAtt.length) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">⏳</div><p>البيانات لم تُحمَّل بعد، انتظر لحظة وأعد المحاولة</p></div>`;
+    return;
+  }
+
+  // حساب غياب كل طالب
+  const counts = {};
+  allAtt.forEach(row => {
+    if(String(row[5]||'').trim() !== 'غائب') return;
+    const classId = String(row[2]||'').trim();
+    const sid = String(row[4]||'').trim();
+    if(!sid || !classId) return;
+    const key = classId+'|'+sid;
+    counts[key] = (counts[key]||0) + 1;
+  });
+
+  const results = [];
+  Object.entries(STUDENTS_DATA).forEach(([classId, students]) => {
+    const cls = CLASSES.find(c=>c.id===classId);
+    students.forEach((name,i) => {
+      const num = i+1;
+      const sid = classId.replace('/','') + String(num).padStart(2,'0');
+      const key = classId+'|'+sid;
+      const count = counts[key] || 0;
+      if(count > 5) results.push({ num, name, classId, clsFull: cls?.full||classId, count });
+    });
+  });
+
+  results.sort((a,b)=>b.count-a.count);
+
+  if(!results.length) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">✅</div><p>لا يوجد طلاب تجاوز غيابهم 5 أيام</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="color:var(--text2);margin-bottom:16px;font-size:14px">${results.length} طالب تجاوز غيابه 5 أيام</div>
+    ${results.map((s,i)=>`
+    <div class="absence-card">
+      <div class="ac-num">${i+1}</div>
+      <div class="ac-name">${s.name}</div>
+      <div class="ac-class">${s.clsFull}</div>
+      <div class="ac-count">🔴 ${s.count} يوم</div>
+    </div>`).join('')}`;
 }
 
 init();
